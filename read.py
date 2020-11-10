@@ -213,7 +213,10 @@ class Individual:
         self.tempNeg = 0
 
 if __name__ == '__main__':
-    wb = xlrd.open_workbook("C:\\Users\\denis\\code\\python\\QBStats\\stats.xlsx")
+    #C:\\Users\\denis\\code\\python\\QBStats\\stats.xlsx
+    print('Input File Location: ')
+    path = input()
+    wb = xlrd.open_workbook(path)
     obj = Matches(wb)
     with open('sqbs.sqbs', 'w') as writer:
         sqbs = obj.create_sqbs_string()
