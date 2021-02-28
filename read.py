@@ -39,9 +39,9 @@ class Matches:
         team1Score = int(sheet.cell_value(36, 1))
         team2Score = int(sheet.cell_value(36, 14))
         #getting tuh
-        tuh = 20
+        tuh = 1
         for i in range(6):
-            num = sheet.cell_value(31, 2)
+            num = sheet.cell_value(31, 2 + i)
             if (num > tuh):
                 tuh = int(num)
         #round number
@@ -84,7 +84,10 @@ class Matches:
                         playersString = playersString + stuff + '\n'
             else:
                 p = school.get_individuals()[int(playerNum)]
-                playerGP = sheet.cell_value(31, int(2 + playerNum)) / tuh
+                if i % 2 == 0:
+                    playerGP = sheet.cell_value(31, int(2 + playerNum)) / tuh
+                else: 
+                    playerGP = sheet.cell_value(31, int(12 + playerNum)) / tuh
                 if playerGP == 0 or playerGP == 1:
                     playerGP = int(playerGP)
                 playerP = int(p.get_tempPower())
