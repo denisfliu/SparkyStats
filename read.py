@@ -45,7 +45,7 @@ class Matches:
             if (num > tuh):
                 tuh = int(num)
         #round number
-        rndNumber = int(sheet.cell_value(2, 23))
+        rndNumber = int(sheet.cell_value(3, 1))
         #bonuses heard/allocating points to individuals
         team1BonusesHeard = 0
         team2BonusesHeard = 0
