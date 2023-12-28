@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import xlrd
-from src.sqbs import Matches
+from src.sqbs_old import Matches
 
 if __name__ == "__main__":
     # C:\\Users\\denis\\code\\python\\QBStats\\stats.xlsx

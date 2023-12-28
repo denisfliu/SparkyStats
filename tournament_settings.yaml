@@ -1,0 +1,8 @@
+name: SCT Online
+tu_per_game: 22
+tu_per_overtime: 1
+
+stats_sheet: default # naqt
+
+# copy and paste naqt and rename for different stats_sheet profile
+naqt:

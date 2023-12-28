@@ -1,33 +1,9 @@
-class School:
-    def __init__(self, sName, iNames):
-        self.school = sName
-        self.individuals = []
-        count = 0
-        for _ in iNames:
-            self.individuals.append(Individual(iNames[count]))
-            count = count + 1
-
-    def get_name(self):
-        return self.school
-
-    def get_individuals(self):
-        return self.individuals
-
-    def get_number(self):
-        return len(self.individuals)
-
-    def get_individual_strings(self):
-        players = []
-        count = 0
-        for x in self.individuals:
-            players.append(x.get_indiv())
-            count += 1
-        return players
+from typing import List
 
 
-class Individual:
-    def __init__(self, iName):
-        self.indiv = iName
+class Player:
+    def __init__(self, name: str):
+        self.name = name
         self.power = 0
         self.reg = 0
         self.neg = 0
@@ -35,8 +11,8 @@ class Individual:
         self.tempReg = 0
         self.tempNeg = 0
 
-    def get_indiv(self):
-        return self.indiv
+    def get_player_name(self):
+        return self.name
 
     def get_power(self):
         return self.power
@@ -68,3 +44,24 @@ class Individual:
         self.tempPower = 0
         self.tempReg = 0
         self.tempNeg = 0
+
+
+class School:
+    def __init__(self, name: str, players: List[str]):
+        self.school = name
+        self.players = [Player(player) for player in players]
+        self.players.sort(
+            key=lambda n: n.get_player_name().split()[-1]
+        )  # TODO check if this sorts names correctly
+
+    def get_name(self) -> str:
+        return self.school
+
+    def get_players(self) -> List[Player]:
+        return self.players
+
+    def get_num_players(self) -> int:
+        return len(self.players)
+
+    def get_player_strings(self) -> List[str]:
+        return [player.get_player_name() for player in self.players]
