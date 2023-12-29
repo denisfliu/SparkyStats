@@ -23,7 +23,7 @@ def get_sheet_config():
     return config[stats_type]
 
 
-def fancy_print(s: str):
+def fancy_print(s: str) -> None:
     print("-" * 30)
     print(s)
     print("-" * 30)
@@ -85,6 +85,7 @@ class Sheet:
             self.__tu_no_bonus_to_lightning(),
             self.__player_info(),
         ].join("\n")
+        self.__check_issues()
         fancy_print(f"Finished {self.sheet_location_str}")
         return sheet_string
 
@@ -95,7 +96,7 @@ class Sheet:
         assert left ^ right, "exactly one of left or right should be true"
         return self.left_team_config if left else self.right_team_config
 
-    def init_left_and_right_schools(self):
+    def init_left_and_right_schools(self) -> None:
         left_team_name = self.val(self.left_team_config.name)
         right_team_name = self.val(self.right_team_config.name)
 
@@ -106,7 +107,7 @@ class Sheet:
         self.left_school = self.schools[self.schools_dict[left_team_name]]
         self.right_school = self.schools[self.schools_dict[right_team_name]]
 
-    def init_points(self):
+    def init_points(self) -> None:
         CellPosition = namedtuple("name", "tuh", "power", "ten", "neg")
 
         max_players = Sheet.sheet_config.max_players_per_team
@@ -169,12 +170,12 @@ class Sheet:
 
             on_left = False
 
-    def init_overtime(self):
+    def init_overtime(self) -> None:
         if Sheet.sheet_config.overtime is not None:
             self.is_overtime
 
     # each player is temporarily assigned negs, tens, powers, and tuh per sheet. reset that here
-    def reset_player_points(self):
+    def reset_player_points(self) -> None:
         for school in (self.left_school, self.right_school):
             for player in school.get_players():
                 player.reset_temp_stats()
@@ -183,13 +184,13 @@ class Sheet:
     def val(self, loc: str):
         return self.sheet[loc].value
 
-    def warning(self, warn: str, minor: bool = False):
+    def warning(self, warn: str, minor: bool = False) -> None:
         print(f"[{'' if not minor else 'MINOR '}WARNING]: {warn}")
 
     ########
     ###    Stats sheet stuff
     ########
-    def __id(self):
+    def __id(self) -> str:
         Sheet.num_sheets_processed += 1
         return str(Sheet.num_sheets_processed - 1)
 
@@ -289,6 +290,32 @@ class Sheet:
         self.reset_player_points()
         return player_strings.join("\n")
 
+    def __check_issues(self) -> None:
+        issues_str = Sheet.sheet_config.issues
+        issues = issues_str.split("-")
+        warning_list = []
+        if len(issues) == 1:
+            warning_list.append(self.val(issues[0]))
+        elif len(issues) == 2:
+            coord1, coord2 = coordinate_from_string(issues[0]), coordinate_from_string(
+                issues[1]
+            )
+            if coord1[0] != coord2[0]:
+                raise ValueError(
+                    f"Issue Range must be in the same column (same letters)"
+                )
+            for i in range(coord1[1], coord2[1] + 1):
+                warning_list.append(self.val(f"{coord1[0]}{i}"))
+
+        elif len(issues) > 2:
+            raise ValueError(
+                f"Issues in config cannot be {issues_str}. Must have less than 2 '-'"
+            )
+
+        for warning in warning_list:
+            if warning is not None and warning != "":
+                self.warn(f"+ [ISSUE @ {self.sheet_location_str}] {issues[0]}")
+
 
 class Matches:
     """
@@ -303,8 +330,10 @@ class Matches:
             file for file in os.listdir(tournament_directory) if file.endswith(".xlsx")
         ]
         roster_sheet = os.path.join(tournament_directory, "roster.xlsx")
+        if roster_sheet not in self.files:
+            roster_sheet = os.path.join(tournament_directory, "Roster.xlsx")
 
-        assert roster_sheet in self.files, "roster.xlsx required"
+        assert roster_sheet in self.files, "roster.xlsx or Roster.xlsx required"
         self.files.remove(roster_sheet)
 
         self.general_config = get_general_config()
