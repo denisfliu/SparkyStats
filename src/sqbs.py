@@ -23,6 +23,12 @@ def get_sheet_config():
     return config[stats_type]
 
 
+def fancy_print(s: str):
+    print("-" * 30)
+    print(s)
+    print("-" * 30)
+
+
 class Sheet:
     """
     For each sheet, this class collects the necessary information and returns
@@ -62,6 +68,7 @@ class Sheet:
         self.init_points()
 
     def compile_sqbs_string(self) -> str:
+        fancy_print(f"Starting {self.sheet_location_str}")
         sheet_string = [
             self.__id(),
             self.__team_number(left=True),
@@ -78,6 +85,7 @@ class Sheet:
             self.__tu_no_bonus_to_lightning(),
             self.__player_info(),
         ].join("\n")
+        fancy_print(f"Finished {self.sheet_location_str}")
         return sheet_string
 
     ########
@@ -290,8 +298,6 @@ class Matches:
     https://www.qbwiki.com/wiki/SQBS_data_file
     """
 
-    general_config = get_general_config()
-
     def __init__(self, tournament_directory: str):
         self.files = [
             file for file in os.listdir(tournament_directory) if file.endswith(".xlsx")
@@ -300,6 +306,8 @@ class Matches:
 
         assert roster_sheet in self.files, "roster.xlsx required"
         self.files.remove(roster_sheet)
+
+        self.general_config = get_general_config()
 
         self.schools: List[School]
         self.schools_dict: Dict[str, int]
@@ -435,7 +443,7 @@ class Matches:
         return "4"
 
     def __tournament_name(self) -> str:
-        return Matches.general_config.name
+        return self.general_config.name
 
     def __ftp_settings(self) -> str:
         host_address = ""
