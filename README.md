@@ -1,8 +1,9 @@
 # SparkyStats
-Converts excel stat sheets from NAQT-like Quizbowl tournaments to SQBS files.
+Converts excel stat sheets from Quizbowl tournaments to SQBS files. Currently revamping.
 
 ## Requirements
 You need to [install python](https://wiki.python.org/moin/BeginnersGuide/Download). Once python is installed (any version will probably do), install `omegaconf` and `openpyxl` using the following commands.
+
 `pip install omegaconf`
 
 `pip install openpyxl`
