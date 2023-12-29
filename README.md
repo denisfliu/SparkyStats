@@ -15,7 +15,7 @@ You need to [install python](https://wiki.python.org/moin/BeginnersGuide/Downloa
 4. Duplicate this template sheet if desired (e.g., you want each mod to own a stats sheet).
 ![alt text](images/roster.png "ms paint picture")
 4. Adjust `tournament_settings.yaml` to fit your tournament's specifications.
-5. Download all sheets as excel sheets (.xlsx) and move them to a folder. This folder should contain a "roster.xlsx" or a "Roster.xlsx" file, along with all stats sheets for the tournament.
+5. Download all sheets as excel sheets (.xlsx) and move them to a folder. This folder should contain a "roster.xlsx" or a "Roster.xlsx" file, along with all stats sheets for the tournament. Note that it is unnecessary to open the excel files when downloaded (they probably won't work).
 5. Run `python -m read` and provide either the absolute or relative path to the folder you moved the sheets to.
 6. Heed warnings which appear.
 7. The desired sqbs file should be written in the specified folder.
