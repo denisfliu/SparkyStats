@@ -12,8 +12,8 @@ You need to [install python](https://wiki.python.org/moin/BeginnersGuide/Downloa
 1. Create a roster sheet like [this one](https://docs.google.com/spreadsheets/d/1vGMV2RXi3A570GQbttTdr5KNk6AqBUo7_V9ABelY9Qg/edit#gid=0).
 2. Create a copy of a template stats sheet ([UCSD](https://docs.google.com/spreadsheets/d/1Yn8gCP4u07dCtWf3WFvc6DgIOi5QNNsU8h6PP-bTbyI/edit#gid=156438897) or [NAQT](https://docs.google.com/spreadsheets/d/1wMzwQ-AGr-TQvuvebL3bLAKLbRJC38zFjz1GoRR5mh4/edit#gid=603156631) or your own). Within each template, there is an empty subsheet (duplicate_me or Spreadsheet in the provided templates) which mods should duplicate and rename (renaming is necessary). Other kinds of template sheets which are similar can probably be used; you will need to create a custom profile in `tournament_settings.yaml`.
 3. In your copy of the stats template, go to the "Rosters" subsheet and change cell A1 by replacing the first item in the IMPORTRANGE tuple with the appropriate URL information from the roster sheet.
-4. Duplicate this template sheet if desired (e.g., you want each mod to own a stats sheet).
 ![alt text](images/roster.png "ms paint picture")
+4. Duplicate this template sheet if desired (e.g., you want each mod to own a stats sheet).
 4. Adjust `tournament_settings.yaml` to fit your tournament's specifications.
 5. Download all sheets as excel sheets (.xlsx) and move them to a folder. This folder should contain a "roster.xlsx" or a "Roster.xlsx" file, along with all stats sheets for the tournament. Note that it is unnecessary to open the excel files when downloaded (they probably won't work).
 5. Run `python -m read` and provide either the absolute or relative path to the folder you moved the sheets to.
