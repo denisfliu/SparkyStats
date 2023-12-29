@@ -31,6 +31,7 @@ default: # settings for sheet in the readme
   round_number: B4
   overtime: B5 # not strictly necessary, use null if it doesn't exist
   issues: B6 # indicate a column range (AE5-AE28) or single square (B6)
+  scorekeeper: B2
   max_players_per_team: 6
 
 naqt: # settings for naqt sheets
@@ -59,4 +60,5 @@ naqt: # settings for naqt sheets
   round_number: B2
   overtime: null # not strictly necessary, use null if it doesn't exist
   issues: AE5-AE28 # indicate a column range (AE5-AE28) or single square (B6)
+  scorekeeper: O2
   max_players_per_team: 8

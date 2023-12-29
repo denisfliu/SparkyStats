@@ -140,6 +140,7 @@ class Sheet:
         )
 
         on_left = True
+        player_names = set()
         for pos in (l_pos, r_pos):
             sch = self.left_school if on_left else self.right_school
             for _ in range(max_players):
@@ -151,9 +152,16 @@ class Sheet:
                 if (name is None or name == "") and (
                     tuh > 0 or power > 0 or ten > 0 or neg > 0
                 ):
-                    self.warning(
-                        f"{self.sheet_location_str} has a ghost getting tossups"
-                    )
+                    self.warning("no name is getting tossups, skipped point collection")
+                    continue
+
+                num_players = len(player_names)
+                player_names.add(name)
+                if num_players == len(player_names):
+                    self.warning("two of the same player")
+                if power + ten + neg > tuh:
+                    self.warning("power/ten/neg exceeded tuh")
+
                 sch.find_player(name).add_game_stats(power, ten, neg, tuh)
 
                 if on_left:
@@ -185,7 +193,17 @@ class Sheet:
         return self.sheet[loc].value
 
     def warning(self, warn: str, minor: bool = False) -> None:
-        print(f"[{'' if not minor else 'MINOR '}WARNING]: {warn}")
+        if self.scorekeeper is None:
+            loc = Sheet.sheet_config.scorekeeper
+            if loc is None:
+                self.scorekeeper = ""
+            else:
+                self.scorekeeper = self.val(loc)
+                if self.scorekeeper is None:
+                    self.scorekeeper = ""
+        print(
+            f"[{'' if not minor else 'MINOR '}WARNING] ({self.sheet_location_str}) (SK/Mod: {self.scorekeeper}): {warn}"
+        )
 
     ########
     ###    Stats sheet stuff
@@ -215,7 +233,11 @@ class Sheet:
         return str(tu_heard)
 
     def __round_number(self) -> str:
-        return str(self.val(Sheet.sheet_config.round_number))
+        round_number = self.val(Sheet.sheet_config.round_number)
+        if round_number is None or round_number == "":
+            self.warn(f"bad round number, setting to -1")
+            return "-1"
+        return str(round_number)
 
     def __bonuses_heard(self, left: bool = False, right: bool = False) -> str:
         assert left ^ right, "exactly one of left or right should be true"
@@ -244,7 +266,7 @@ class Sheet:
 
         if bonus_points % 10 != 0:
             self.warning(
-                f"{self.sheet_location_str} has {self.left_school.get_name() if left else self.right_school.get_name()} with bonuses which are not a multiple of 10"
+                f"{self.left_school.get_name() if left else self.right_school.get_name()} have bonuses which are not a multiple of 10"
             )
         return str(bonus_points)
 
@@ -314,7 +336,7 @@ class Sheet:
 
         for warning in warning_list:
             if warning is not None and warning != "":
-                self.warn(f"+ [ISSUE @ {self.sheet_location_str}] {issues[0]}")
+                self.warn(f"[ISSUE] | {issues[0]}")
 
 
 class Matches:
@@ -400,6 +422,10 @@ class Matches:
             )
             for (file, wb) in workbooks
             for sheet in wb
+            if sheet.title != "Rosters"
+            and sheet.title != "duplicate_me"
+            and sheet.title != "Scoresheet"
+            and sheet.title != "Instructions"
         ]
 
     def __all_team_information(self) -> str:
