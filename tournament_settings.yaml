@@ -1,8 +1,62 @@
-name: SCT Online
-tu_per_game: 22
-tu_per_overtime: 1
+general:
+  name: SCT Online
+  tu_per_game: 22
+  tu_per_overtime: 1
 
+# copy sheet profile and rename for different sheets
 stats_sheet: default # naqt
+default: # settings for sheet in the readme
+  left_team:
+    name: C1
+    total_score: M31
+    bonus_score: I32
+    first_player:
+      name: C3
+      tuh: C32
+      power: C33
+      ten: C34
+      neg: C35
 
-# copy and paste naqt and rename for different stats_sheet profile
-naqt:
+  right_team:
+    name: O1
+    total_score: Y31
+    bonus_score: U32
+    first_player:
+      name: O3
+      tuh: O32
+      power: O33
+      ten: O34
+      neg: O35
+
+  round_number: B4
+  overtime: B5 # not strictly necessary, use null if it doesn't exist
+  issues: B6 # indicate a column range (AE5-AE28) or single square (B6)
+  max_players_per_team: 6
+
+naqt: # settings for naqt sheets
+  left_team:
+    name: B3
+    total_score: B35
+    bonus_score: M41
+    first_player:
+      name: B4
+      tuh: B36
+      power: B37
+      ten: B38
+      neg: B39
+      
+  right_team:
+    name: Q1
+    total_score: Q35
+    bonus_score: M41
+    first_player:
+      name: Q4
+      tuh: Q36
+      power: Q37
+      ten: Q38
+      neg: Q39
+
+  round_number: B2
+  overtime: null # not strictly necessary, use null if it doesn't exist
+  issues: AE5-AE28 # indicate a column range (AE5-AE28) or single square (B6)
+  max_players_per_team: 8
