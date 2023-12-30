@@ -1,6 +1,5 @@
 import os
 from typing import List, Dict
-from omegaconf import OmegaConf
 from collections import namedtuple
 
 from openpyxl import load_workbook
@@ -11,22 +10,7 @@ from openpyxl.utils.cell import (
 )
 
 from src.classes import School
-
-
-def get_general_config():
-    return OmegaConf.load("config.yaml")["general"]
-
-
-def get_sheet_config():
-    config = OmegaConf.load("config.yaml")
-    stats_type = config.stats_sheet
-    return config[stats_type]
-
-
-def fancy_print(s: str) -> None:
-    print("-" * 30)
-    print(s)
-    print("-" * 30)
+from src.util import *
 
 
 class Sheet:
@@ -52,6 +36,15 @@ class Sheet:
         self.from_workbook = from_workbook
         self.sheet_location_str = f"sheet {sheet.title} from {self.from_workbook}"
 
+        # scorekeeper
+        loc = Sheet.sheet_config.scorekeeper
+        if loc is None:
+            self.scorekeeper = "N/A"
+        else:
+            self.scorekeeper = self.val(loc)
+            if self.scorekeeper is None:
+                self.scorekeeper = "N/A"
+
         self.left_team_config = Sheet.sheet_config.left_team
         self.right_team_config = Sheet.sheet_config.right_team
 
@@ -59,7 +52,7 @@ class Sheet:
         self.right_school: School
         self.init_left_and_right_schools()
 
-        self.is_overtime: bool
+        self.is_overtime: bool = False
         self.init_overtime()
 
         self.left_powers, self.left_tens, self.left_negs = 0, 0, 0
@@ -69,22 +62,24 @@ class Sheet:
 
     def compile_sqbs_string(self) -> str:
         fancy_print(f"Starting {self.sheet_location_str}")
-        sheet_string = [
-            self.__id(),
-            self.__team_number(left=True),
-            self.__team_number(right=True),
-            self.__score(left=True),
-            self.__score(right=True),
-            self.__tossups_heard(),
-            self.__round_number(),
-            self.__bonuses_heard(left=True),
-            self.__bonus_points(left=True),
-            self.__bonuses_heard(right=True),
-            self.__bonus_points(right=True),
-            self.__is_overtime(),
-            self.__tu_no_bonus_to_lightning(),
-            self.__player_info(),
-        ].join("\n")
+        sheet_string = "\n".join(
+            [
+                self.__id(),
+                self.__team_number(left=True),
+                self.__team_number(right=True),
+                self.__score(left=True),
+                self.__score(right=True),
+                self.__tossups_heard(),
+                self.__round_number(),
+                self.__bonuses_heard(left=True),
+                self.__bonus_points(left=True),
+                self.__bonuses_heard(right=True),
+                self.__bonus_points(right=True),
+                self.__is_overtime(),
+                self.__tu_no_bonus_to_lightning(),
+                self.__player_info(),
+            ]
+        )
         self.__check_issues()
         fancy_print(f"Finished {self.sheet_location_str}")
         return sheet_string
@@ -100,15 +95,20 @@ class Sheet:
         left_team_name = self.val(self.left_team_config.name)
         right_team_name = self.val(self.right_team_config.name)
 
-        if left_team_name or right_team_name not in self.schools_dict:
+        if (
+            left_team_name not in self.schools_dict.keys()
+            or right_team_name not in self.schools_dict.keys()
+        ):
             raise ValueError(
-                f"one of {left_team_name} or {right_team_name} not found in school list in {self.sheet_location_str}"
+                f"one of {left_team_name} or {right_team_name} not found in school list. sheet origin: {self.sheet_location_str}"
             )
         self.left_school = self.schools[self.schools_dict[left_team_name]]
         self.right_school = self.schools[self.schools_dict[right_team_name]]
 
     def init_points(self) -> None:
-        CellPosition = namedtuple("name", "tuh", "power", "ten", "neg")
+        CellPosition = namedtuple(
+            "CellPosition", ["name", "tuh", "power", "ten", "neg"]
+        )
 
         max_players = Sheet.sheet_config.max_players_per_team
         lp_config = self.left_team_config.first_player
@@ -149,10 +149,11 @@ class Sheet:
                 power = fix_none_int(self.val(pos.power))
                 ten = fix_none_int(self.val(pos.ten))
                 neg = fix_none_int(self.val(pos.neg))
-                if (name is None or name == "") and (
-                    tuh > 0 or power > 0 or ten > 0 or neg > 0
-                ):
-                    self.warning("no name is getting tossups, skipped point collection")
+                if name is None or name == "":
+                    if tuh > 0 or power > 0 or ten > 0 or neg > 0:
+                        self.warning(
+                            "no name is getting tossups, skipped point collection"
+                        )
                     continue
 
                 num_players = len(player_names)
@@ -166,12 +167,12 @@ class Sheet:
 
                 if on_left:
                     self.left_powers += power
-                    self.left_ten += ten
-                    self.left_neg += neg
+                    self.left_tens += ten
+                    self.left_negs += neg
                 else:
                     self.right_powers += power
-                    self.right_ten += ten
-                    self.right_neg += neg
+                    self.right_tens += ten
+                    self.right_negs += neg
 
                 self.most_tuh_by_player = max(self.most_tuh_by_player, tuh)
                 pos = move_right(pos)
@@ -192,17 +193,11 @@ class Sheet:
     def val(self, loc: str):
         return self.sheet[loc].value
 
-    def warning(self, warn: str, minor: bool = False) -> None:
-        if self.scorekeeper is None:
-            loc = Sheet.sheet_config.scorekeeper
-            if loc is None:
-                self.scorekeeper = ""
-            else:
-                self.scorekeeper = self.val(loc)
-                if self.scorekeeper is None:
-                    self.scorekeeper = ""
-        print(
-            f"[{'' if not minor else 'MINOR '}WARNING] ({self.sheet_location_str}) (SK/Mod: {self.scorekeeper}): {warn}"
+    def warning(self, warn: str, is_minor: bool = False) -> None:
+        bwarning(
+            origin=self.sheet_location_str,
+            msg=f"(SK/Mod: {self.scorekeeper}): {warn}",
+            is_minor=is_minor,
         )
 
     ########
@@ -280,13 +275,15 @@ class Sheet:
         forfeit = "0"
         left_lightning = "0"
         right_lightning = "0"
-        return [
-            left_team_tossup_without_bonus,
-            right_team_tossup_without_bonus,
-            forfeit,
-            left_lightning,
-            right_lightning,
-        ].join("\n")
+        return "\n".join(
+            [
+                left_team_tossup_without_bonus,
+                right_team_tossup_without_bonus,
+                forfeit,
+                left_lightning,
+                right_lightning,
+            ]
+        )
 
     def __player_info(self) -> str:
         player_strings = []
@@ -310,7 +307,7 @@ class Sheet:
             else:
                 player_strings.append(no_player_str)
         self.reset_player_points()
-        return player_strings.join("\n")
+        return "\n".join(player_strings)
 
     def __check_issues(self) -> None:
         issues_str = Sheet.sheet_config.issues
@@ -347,9 +344,14 @@ class Matches:
     https://www.qbwiki.com/wiki/SQBS_data_file
     """
 
-    def __init__(self, tournament_directory: str):
+    def __init__(
+        self, tournament_directory: str, config_path="tournament_settings.yaml"
+    ):
+        self.general_config = get_general_config(config_path)
         self.files = [
-            file for file in os.listdir(tournament_directory) if file.endswith(".xlsx")
+            os.path.join(tournament_directory, file)
+            for file in os.listdir(tournament_directory)
+            if file.endswith(".xlsx")
         ]
         roster_sheet = os.path.join(tournament_directory, "roster.xlsx")
         if roster_sheet not in self.files:
@@ -358,9 +360,7 @@ class Matches:
         assert roster_sheet in self.files, "roster.xlsx or Roster.xlsx required"
         self.files.remove(roster_sheet)
 
-        self.general_config = get_general_config()
-
-        self.schools: List[School]
+        self.schools: List[School] = list()
         self.schools_dict: Dict[str, int]
         self.sheets = None
 
@@ -368,31 +368,33 @@ class Matches:
         self.init_sheets()
 
     def compile_sqbs_string(self) -> str:
-        return [
-            self.__number_of_teams(),
-            self.__all_team_information(),
-            self.__number_of_matches(),
-            self.__matches_strings(),
-            self.__points_tracking(),
-            self.__reports(),
-            self.__use_divisions(),
-            self.__sort_method(),
-            self.__tournament_name(),
-            self.__ftp_settings(),
-            self.__always_use_slash(),
-            self.__file_suffixes(),
-            self.__number_of_divisions(),
-            # self.__division_names(),
-            self.__number_of_teams(),
-            self.__team_division_allocation,
-            self.__point_values(),
-            self.__packet_information(),
-            self.__number_of_teams(),
-            self.__exhibition_teams(),
-        ].join("\n")
+        return "\n".join(
+            [
+                self.__number_of_teams(),
+                self.__all_team_information(),
+                self.__number_of_matches(),
+                self.__matches_strings(),
+                self.__points_tracking(),
+                self.__reports(),
+                self.__use_divisions(),
+                self.__sort_method(),
+                self.__tournament_name(),
+                self.__ftp_settings(),
+                self.__always_use_slash(),
+                self.__file_suffixes(),
+                self.__number_of_divisions(),
+                # self.__division_names(),
+                self.__number_of_teams(),
+                self.__team_division_allocation,
+                self.__point_values(),
+                self.__packet_information(),
+                self.__number_of_teams(),
+                self.__exhibition_teams(),
+            ]
+        )
 
     def init_roster(self, roster_sheet):
-        roster_wb = load_workbook(roster_sheet)
+        roster_wb = load_workbook(roster_sheet, data_only=True)
         assert len(roster_wb.sheetnames) == 1, "roster sheet should have one sheet"
 
         ws = roster_wb.active
@@ -400,10 +402,20 @@ class Matches:
             school = ""
             players = []
             for i, name in enumerate(row):
+                val = name.value
+                if val is None:
+                    continue
                 if i == 0:
-                    school = name
+                    school = name.value
                 else:
-                    players.append(name)
+                    players.append(name.value)
+            if school == "":
+                bwarning(
+                    origin="Roster Parsing",
+                    msg=f"skipped players {players} due to empty school name",
+                    is_minor=True,
+                )
+                continue
             self.schools.append(School(name=school, players=players))
         self.schools.sort(key=lambda school: school.get_name())
         self.schools_dict = {}
@@ -412,10 +424,10 @@ class Matches:
             school.index = i
 
     def init_sheets(self):
-        workbooks = [(file, load_workbook(file)) for file in self.files]
+        workbooks = [(file, load_workbook(file, data_only=True)) for file in self.files]
         self.sheets = [
             Sheet(
-                sheet=wb[sheet],
+                sheet=sheet,
                 schools=self.schools,
                 schools_dict=self.schools_dict,
                 from_workbook=file,
@@ -437,19 +449,17 @@ class Matches:
         """
 
         def team_string(school: School) -> str:
-            return (
-                [school.get_num_players() + 1, school.get_name()]
-                .extend(school.get_player_strings())
-                .join("\n")
-            )
+            school_str = [str(school.get_num_players() + 1), school.get_name()]
+            school_str.extend(school.get_player_strings())
+            return "\n".join(school_str)
 
-        return [team_string(school) for school in self.schools].join("\n")
+        return "\n".join([team_string(school) for school in self.schools])
 
     def __number_of_matches(self) -> str:
         return str(len(self.sheets))
 
     def __matches_strings(self) -> str:
-        return [sheet.compile_sqbs_string() for sheet in self.sheets].join("\n")
+        return "\n".join([sheet.compile_sqbs_string() for sheet in self.sheets])
 
     def __points_tracking(self) -> str:
         bonus_conversion = "1"
@@ -459,15 +469,17 @@ class Matches:
         track_tuh = "1"
         sort_players_by_pts = "0"
         warning_bit_mask = "254"
-        return [
-            bonus_conversion,
-            bonus_conversion_automatic,
-            track_power_and_neg,
-            track_lightning,
-            track_tuh,
-            sort_players_by_pts,
-            warning_bit_mask,
-        ].join("\n")
+        return "\n".join(
+            [
+                bonus_conversion,
+                bonus_conversion_automatic,
+                track_power_and_neg,
+                track_lightning,
+                track_tuh,
+                sort_players_by_pts,
+                warning_bit_mask,
+            ]
+        )
 
     def __reports(self) -> str:
         _round = "1"
@@ -478,16 +490,18 @@ class Matches:
         individual_detail = "1"
         stat_key = "1"
         custom_stylesheet = "0"
-        return [
-            _round,
-            team_standings,
-            individual_standings,
-            scoreboard,
-            team_detail,
-            individual_detail,
-            stat_key,
-            custom_stylesheet,
-        ].join("\n")
+        return "\n".join(
+            [
+                _round,
+                team_standings,
+                individual_standings,
+                scoreboard,
+                team_detail,
+                individual_detail,
+                stat_key,
+                custom_stylesheet,
+            ]
+        )
 
     # too lazy
     def __use_divisions(self) -> str:
@@ -505,7 +519,7 @@ class Matches:
         user_name = ""
         directory = ""
         base_file_name = ""
-        return [host_address, user_name, directory, base_file_name].join("\n")
+        return "\n".join([host_address, user_name, directory, base_file_name])
 
     # idk what this means
     def __always_use_slash(self) -> str:
@@ -520,16 +534,18 @@ class Matches:
         player_detail = "_playerdetail.html"
         statkey = "_statkey.html"
         style_sheet = ""
-        return [
-            _round,
-            standings,
-            individuals,
-            games,
-            team_detail,
-            player_detail,
-            statkey,
-            style_sheet,
-        ].join("\n")
+        return "\n".join(
+            [
+                _round,
+                standings,
+                individuals,
+                games,
+                team_detail,
+                player_detail,
+                statkey,
+                style_sheet,
+            ]
+        )
 
     # could add this to the config if desired
     def __number_of_divisions(self) -> str:
@@ -542,18 +558,18 @@ class Matches:
         return str(len(self.schools))
 
     def __team_division_allocation(self) -> str:
-        return (["-1"] * int(self.__number_of_teams())).join("\n")
+        return "\n".join((["-1"] * int(self.__number_of_teams())))
 
     def __point_values(self) -> str:
         type1 = "15"
         type2 = "10"
         type3 = "-5"
         type4 = "0"
-        return [type1, type2, type3, type4].join("\n")
+        return "\n".join([type1, type2, type3, type4])
 
     def __packet_information(self) -> str:
         return "0"
 
     # enter these in manually
     def __exhibition_teams(self) -> str:
-        return (["0"] * int(self.__number_of_teams())).join("\n")
+        return "\n".join((["0"] * int(self.__number_of_teams())))

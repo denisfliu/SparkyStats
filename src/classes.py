@@ -58,7 +58,10 @@ class School:
 
         self.players = [Player(player) for player in players]
         self.players.sort(
-            key=lambda n: n.get_player_name().split()[-1]
+            key=lambda n: (
+                n.get_player_name().split()[-1],
+                " ".join(n.get_player_name().split()[:-1]),
+            )
         )  # TODO check if this sorts names correctly
         for i, player in enumerate(self.players):
             player.index = i

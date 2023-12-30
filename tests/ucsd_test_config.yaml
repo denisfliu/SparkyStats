@@ -1,6 +1,6 @@
 general:
-  name: SCT Online
-  tu_per_game: 22
+  name: UCSD_Test
+  tu_per_game: 20
   tu_per_overtime: 1
 
 # copy sheet profile and rename for different sheets
@@ -64,4 +64,4 @@ naqt: # settings for naqt sheets
   max_players_per_team: 8
 
 misc:
-  skip_minor_warnings: false
+  skip_minor_warnings: true
