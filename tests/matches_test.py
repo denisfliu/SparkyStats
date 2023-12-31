@@ -14,7 +14,6 @@ class TestMatches(unittest.TestCase):
         self.match = Matches(
             path_joiner("tests/ucsd_tournament"), config_path=config_path
         )
-        Sheet.sheet_config = get_sheet_config(config_path)
 
     def test_init(self):
         self.assertEqual(
@@ -41,6 +40,9 @@ class TestMatches(unittest.TestCase):
         )
         self.assertEqual(self.match._Matches__number_of_matches(), "4")
         self.assertEqual(self.match._Matches__tournament_name(), "UCSD_Test")
+
+    def test_compile_sqbs_string(self):
+        self.match.compile_sqbs_string()
 
 
 if __name__ == "__main__":

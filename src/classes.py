@@ -29,7 +29,7 @@ class Player:
         return self.neg
 
     def get_temp_stats(self) -> Tuple[int, int, int, int]:
-        return self.tempPower, self.temp_ten, self.temp_neg, self.temp_tuh
+        return self.temp_power, self.temp_ten, self.temp_neg, self.temp_tuh
 
     def get_index(self):
         assert self.index != -1, f"uninitialized index for {self.get_player_name()}"

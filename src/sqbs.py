@@ -20,7 +20,6 @@ class Sheet:
     is a function.
     """
 
-    sheet_config = get_sheet_config()
     num_sheets_processed = 0
 
     def __init__(
@@ -29,15 +28,20 @@ class Sheet:
         schools: List[School],
         schools_dict: Dict[str, int],
         from_workbook: str,
+        sheet_config,
+        general_config,
     ):
         self.sheet = sheet
         self.schools: List[School] = schools
         self.schools_dict: Dict[str, int] = schools_dict
         self.from_workbook = from_workbook
-        self.sheet_location_str = f"sheet {sheet.title} from {self.from_workbook}"
+        self.sheet_config = sheet_config
+        self.general_config = general_config
+        self.sheet_location_str = f"{sheet.title} from {self.from_workbook}"
+        self.warning_count = 0
 
         # scorekeeper
-        loc = Sheet.sheet_config.scorekeeper
+        loc = self.sheet_config.scorekeeper
         if loc is None:
             self.scorekeeper = "N/A"
         else:
@@ -45,8 +49,8 @@ class Sheet:
             if self.scorekeeper is None:
                 self.scorekeeper = "N/A"
 
-        self.left_team_config = Sheet.sheet_config.left_team
-        self.right_team_config = Sheet.sheet_config.right_team
+        self.left_team_config = self.sheet_config.left_team
+        self.right_team_config = self.sheet_config.right_team
 
         self.left_school: School
         self.right_school: School
@@ -61,7 +65,7 @@ class Sheet:
         self.init_points()
 
     def compile_sqbs_string(self) -> str:
-        fancy_print(f"Starting {self.sheet_location_str}")
+        fancy_print(f"Warnings for {self.sheet_location_str}")
         sheet_string = "\n".join(
             [
                 self.__id(),
@@ -81,7 +85,8 @@ class Sheet:
             ]
         )
         self.__check_issues()
-        fancy_print(f"Finished {self.sheet_location_str}")
+        if self.warning_count == 0:
+            print("All clear!\n")
         return sheet_string
 
     ########
@@ -110,7 +115,7 @@ class Sheet:
             "CellPosition", ["name", "tuh", "power", "ten", "neg"]
         )
 
-        max_players = Sheet.sheet_config.max_players_per_team
+        max_players = self.sheet_config.max_players_per_team
         lp_config = self.left_team_config.first_player
         rp_config = self.right_team_config.first_player
 
@@ -151,7 +156,7 @@ class Sheet:
                 neg = fix_none_int(self.val(pos.neg))
                 if name is None or name == "":
                     if tuh > 0 or power > 0 or ten > 0 or neg > 0:
-                        self.warning(
+                        self.warn(
                             "no name is getting tossups, skipped point collection"
                         )
                     continue
@@ -159,9 +164,9 @@ class Sheet:
                 num_players = len(player_names)
                 player_names.add(name)
                 if num_players == len(player_names):
-                    self.warning("two of the same player")
+                    self.warn("two of the same player")
                 if power + ten + neg > tuh:
-                    self.warning("power/ten/neg exceeded tuh")
+                    self.warn("power/ten/neg exceeded tuh")
 
                 sch.find_player(name).add_game_stats(power, ten, neg, tuh)
 
@@ -180,7 +185,7 @@ class Sheet:
             on_left = False
 
     def init_overtime(self) -> None:
-        if Sheet.sheet_config.overtime is not None:
+        if self.sheet_config.overtime is not None:
             self.is_overtime
 
     # each player is temporarily assigned negs, tens, powers, and tuh per sheet. reset that here
@@ -193,10 +198,11 @@ class Sheet:
     def val(self, loc: str):
         return self.sheet[loc].value
 
-    def warning(self, warn: str, is_minor: bool = False) -> None:
+    def warn(self, warn: str, is_minor: bool = False) -> None:
+        self.warning_count += 1
         bwarning(
-            origin=self.sheet_location_str,
-            msg=f"(SK/Mod: {self.scorekeeper}): {warn}",
+            origin=f"{self.sheet_location_str} | SK: {self.scorekeeper}",
+            msg=warn,
             is_minor=is_minor,
         )
 
@@ -219,16 +225,18 @@ class Sheet:
 
     # should be brought up in issues if it doesn't align with tournament setting
     def __tossups_heard(self) -> str:
-        general_config = get_general_config()
-        tu_heard = general_config.tu_per_game
+        tu_heard = self.general_config.tu_per_game
         if self.is_overtime:
-            tu_heard += general_config.tu_per_overtime
+            tu_heard += self.general_config.tu_per_overtime
         if self.most_tuh_by_player != tu_heard:
-            self.warning("")
+            self.warn(
+                "game's maximum tossups heard by a player is less than game settings",
+                is_minor=True,
+            )
         return str(tu_heard)
 
     def __round_number(self) -> str:
-        round_number = self.val(Sheet.sheet_config.round_number)
+        round_number = self.val(self.sheet_config.round_number)
         if round_number is None or round_number == "":
             self.warn(f"bad round number, setting to -1")
             return "-1"
@@ -237,9 +245,9 @@ class Sheet:
     def __bonuses_heard(self, left: bool = False, right: bool = False) -> str:
         assert left ^ right, "exactly one of left or right should be true"
         if left:
-            return self.left_powers + self.left_tens
+            return str(self.left_powers + self.left_tens)
         if right:
-            return self.right_powers + self.right_tens
+            return str(self.right_powers + self.right_tens)
 
     def __bonus_points(self, left: bool = False, right: bool = False) -> str:
         assert left ^ right, "exactly one of left or right should be true"
@@ -260,7 +268,7 @@ class Sheet:
             )
 
         if bonus_points % 10 != 0:
-            self.warning(
+            self.warn(
                 f"{self.left_school.get_name() if left else self.right_school.get_name()} have bonuses which are not a multiple of 10"
             )
         return str(bonus_points)
@@ -310,7 +318,7 @@ class Sheet:
         return "\n".join(player_strings)
 
     def __check_issues(self) -> None:
-        issues_str = Sheet.sheet_config.issues
+        issues_str = self.sheet_config.issues
         issues = issues_str.split("-")
         warning_list = []
         if len(issues) == 1:
@@ -333,7 +341,7 @@ class Sheet:
 
         for warning in warning_list:
             if warning is not None and warning != "":
-                self.warn(f"[ISSUE] | {issues[0]}")
+                self.warn(f"[ISSUE] | {warning}")
 
 
 class Matches:
@@ -348,6 +356,7 @@ class Matches:
         self, tournament_directory: str, config_path="tournament_settings.yaml"
     ):
         self.general_config = get_general_config(config_path)
+        self.sheet_config = get_sheet_config(config_path)
         self.files = [
             os.path.join(tournament_directory, file)
             for file in os.listdir(tournament_directory)
@@ -385,7 +394,7 @@ class Matches:
                 self.__number_of_divisions(),
                 # self.__division_names(),
                 self.__number_of_teams(),
-                self.__team_division_allocation,
+                self.__team_division_allocation(),
                 self.__point_values(),
                 self.__packet_information(),
                 self.__number_of_teams(),
@@ -431,6 +440,8 @@ class Matches:
                 schools=self.schools,
                 schools_dict=self.schools_dict,
                 from_workbook=file,
+                sheet_config=self.sheet_config,
+                general_config=self.general_config,
             )
             for (file, wb) in workbooks
             for sheet in wb
