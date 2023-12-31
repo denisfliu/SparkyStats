@@ -419,11 +419,12 @@ class Matches:
                 else:
                     players.append(name.value)
             if school == "":
-                bwarning(
-                    origin="Roster Parsing",
-                    msg=f"skipped players {players} due to empty school name",
-                    is_minor=True,
-                )
+                if len(players) > 0:
+                    bwarning(
+                        origin="Roster Parsing",
+                        msg=f"skipped players {players} due to empty school name",
+                        is_minor=True,
+                    )
                 continue
             self.schools.append(School(name=school, players=players))
         self.schools.sort(key=lambda school: school.get_name())

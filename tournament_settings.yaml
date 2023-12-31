@@ -1,6 +1,6 @@
 general:
   name: SCT Online
-  tu_per_game: 22
+  tu_per_game: 20
   tu_per_overtime: 1
 
 # copy sheet profile and rename for different sheets

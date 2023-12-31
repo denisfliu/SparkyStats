@@ -1,4 +1,4 @@
-*.sqbs
-*.xlsx
+.sqbs
+.xlsx
 tournaments
 *__pycache*
