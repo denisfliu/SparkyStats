@@ -435,6 +435,11 @@ class Matches:
 
     def init_sheets(self):
         workbooks = [(file, load_workbook(file, data_only=True)) for file in self.files]
+
+        # Ignore empty sheets by checking if team names are filled in
+        lt_col, lt_row = coordinate_from_string(self.sheet_config.left_team.name)
+        rt_col, rt_row = coordinate_from_string(self.sheet_config.right_team.name)
+
         self.sheets = [
             Sheet(
                 sheet=sheet,
@@ -450,6 +455,8 @@ class Matches:
             and sheet.title != "duplicate_me"
             and sheet.title != "Scoresheet"
             and sheet.title != "Instructions"
+            and sheet.cell(column=column_index_from_string(lt_col), row=lt_row).value
+            and sheet.cell(column=column_index_from_string(rt_col), row=rt_row).value
         ]
 
     def __all_team_information(self) -> str:
