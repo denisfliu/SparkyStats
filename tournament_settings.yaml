@@ -47,7 +47,7 @@ naqt: # settings for naqt sheets
       neg: B39
       
   right_team:
-    name: Q1
+    name: Q3
     total_score: Q35
     bonus_score: M41
     first_player:
