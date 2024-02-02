@@ -59,10 +59,17 @@ class School:
         self.players = [Player(player) for player in players]
         self.players.sort(
             key=lambda n: (
-                n.get_player_name().split()[-1],
-                " ".join(n.get_player_name().split()[:-1]),
+                n.get_player_name().split("(")[0].split()[-1],  # Last name
+                " ".join(
+                    n.get_player_name().split("(")[0].split()[:-1]
+                ),  # First and middle names without suffix
+                (
+                    n.get_player_name().split("(")[-1].rstrip(")")
+                    if "(" in n.get_player_name()
+                    else ""
+                ),  # Suffix
             )
-        )  # TODO check if this sorts names correctly
+        )
         for i, player in enumerate(self.players):
             player.index = i
         self.players_dict = {
