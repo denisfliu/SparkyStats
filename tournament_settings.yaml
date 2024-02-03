@@ -2,9 +2,11 @@ general:
   name: SCT Online
   tu_per_game: 20
   tu_per_overtime: 1
+  autofill_tuh: False
 
 # copy sheet profile and rename for different sheets
 stats_sheet: default # naqt
+
 default: # settings for sheet in the readme
   left_team:
     name: C1
