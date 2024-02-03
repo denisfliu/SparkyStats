@@ -160,6 +160,7 @@ class Sheet:
                         self.warn(
                             "no name is getting tossups, skipped point collection"
                         )
+                    pos = move_right(pos)
                     continue
 
                 # If autofilling TUH, all zeros and blanks in TUH cells default to config tu_per_game
