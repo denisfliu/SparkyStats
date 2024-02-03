@@ -253,7 +253,7 @@ class Sheet:
         assert left ^ right, "exactly one of left or right should be true"
         if left:
             bonus_points = (
-                int(self.__score(left))
+                int(self.__score(left=True))
                 - 15 * self.left_powers
                 - 10 * self.left_tens
                 + 5 * self.left_negs
@@ -261,7 +261,7 @@ class Sheet:
 
         if right:
             bonus_points = (
-                int(self.__score(right))
+                int(self.__score(right=True))
                 - 15 * self.right_powers
                 - 10 * self.right_tens
                 + 5 * self.right_negs
@@ -301,16 +301,18 @@ class Sheet:
             if i + 1 <= self.left_school.get_num_players():
                 player = self.left_school.get_players()[i]
                 power, ten, neg, tuh = player.get_temp_stats()
+                games_played = tuh / total_tuh
                 player_strings.append(
-                    f"{i}\n{tuh / total_tuh}\n{power}\n{ten}\n{neg}\n0\n{power * 15 + 10 * ten - 5 * neg}"
+                    f"{i}\n{1 if games_played == 1.0 else games_played}\n{power}\n{ten}\n{neg}\n0\n{power * 15 + 10 * ten - 5 * neg}"
                 )
             else:
                 player_strings.append(no_player_str)
             if i + 1 <= self.right_school.get_num_players():
                 player = self.right_school.get_players()[i]
                 power, ten, neg, tuh = player.get_temp_stats()
+                games_played = tuh / total_tuh
                 player_strings.append(
-                    f"{i}\n{tuh / total_tuh}\n{power}\n{ten}\n{neg}\n0\n{power * 15 + 10 * ten - 5 * neg}"
+                    f"{i}\n{1 if games_played == 1.0 else games_played}\n{power}\n{ten}\n{neg}\n0\n{power * 15 + 10 * ten - 5 * neg}"
                 )
             else:
                 player_strings.append(no_player_str)
@@ -439,7 +441,6 @@ class Matches:
         # Ignore empty sheets by checking if team names are filled in
         lt_col, lt_row = coordinate_from_string(self.sheet_config.left_team.name)
         rt_col, rt_row = coordinate_from_string(self.sheet_config.right_team.name)
-
         self.sheets = [
             Sheet(
                 sheet=sheet,
