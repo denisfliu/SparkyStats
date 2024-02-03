@@ -62,10 +62,10 @@ class Sheet:
         self.left_powers, self.left_tens, self.left_negs = 0, 0, 0
         self.right_powers, self.right_tens, self.right_negs = 0, 0, 0
         self.most_tuh_by_player = 0
-        self.init_points()
 
     def compile_sqbs_string(self) -> str:
-        fancy_print(f"Warnings for {self.sheet_location_str}")
+        self.init_points()
+        fancy_print(f"Parsing {self.sheet_location_str}............")
         sheet_string = "\n".join(
             [
                 self.__id(),
@@ -240,7 +240,7 @@ class Sheet:
         if round_number is None or round_number == "":
             self.warn(f"bad round number, setting to -1")
             return "-1"
-        return str(round_number)
+        return str(int(round_number))
 
     def __bonuses_heard(self, left: bool = False, right: bool = False) -> str:
         assert left ^ right, "exactly one of left or right should be true"
@@ -253,7 +253,7 @@ class Sheet:
         assert left ^ right, "exactly one of left or right should be true"
         if left:
             bonus_points = (
-                int(self.__score(left))
+                int(self.__score(left=True))
                 - 15 * self.left_powers
                 - 10 * self.left_tens
                 + 5 * self.left_negs
@@ -261,7 +261,7 @@ class Sheet:
 
         if right:
             bonus_points = (
-                int(self.__score(right))
+                int(self.__score(right=True))
                 - 15 * self.right_powers
                 - 10 * self.right_tens
                 + 5 * self.right_negs
@@ -301,16 +301,22 @@ class Sheet:
             if i + 1 <= self.left_school.get_num_players():
                 player = self.left_school.get_players()[i]
                 power, ten, neg, tuh = player.get_temp_stats()
+                games_played = tuh / total_tuh
+                if games_played == 1 or games_played == 0:
+                    games_played = int(games_played)
                 player_strings.append(
-                    f"{i}\n{tuh / total_tuh}\n{power}\n{ten}\n{neg}\n0\n{power * 15 + 10 * ten - 5 * neg}"
+                    f"{i}\n{games_played}\n{power}\n{ten}\n{neg}\n0\n{power * 15 + 10 * ten - 5 * neg}"
                 )
             else:
                 player_strings.append(no_player_str)
             if i + 1 <= self.right_school.get_num_players():
                 player = self.right_school.get_players()[i]
                 power, ten, neg, tuh = player.get_temp_stats()
+                games_played = tuh / total_tuh
+                if games_played == 1 or games_played == 0:
+                    games_played = int(games_played)
                 player_strings.append(
-                    f"{i}\n{tuh / total_tuh}\n{power}\n{ten}\n{neg}\n0\n{power * 15 + 10 * ten - 5 * neg}"
+                    f"{i}\n{games_played}\n{power}\n{ten}\n{neg}\n0\n{power * 15 + 10 * ten - 5 * neg}"
                 )
             else:
                 player_strings.append(no_player_str)
@@ -399,6 +405,7 @@ class Matches:
                 self.__packet_information(),
                 self.__number_of_teams(),
                 self.__exhibition_teams(),
+                "\n",
             ]
         )
 
@@ -439,7 +446,6 @@ class Matches:
         # Ignore empty sheets by checking if team names are filled in
         lt_col, lt_row = coordinate_from_string(self.sheet_config.left_team.name)
         rt_col, rt_row = coordinate_from_string(self.sheet_config.right_team.name)
-
         self.sheets = [
             Sheet(
                 sheet=sheet,
@@ -486,7 +492,9 @@ class Matches:
         track_power_and_neg = "3"
         track_lightning = "0"
         track_tuh = "1"
-        sort_players_by_pts = "0"
+        sort_players_by_pts = (
+            "3"  # This doesn't match the wiki but it matches my sqbs settings
+        )
         warning_bit_mask = "254"
         return "\n".join(
             [
@@ -542,7 +550,7 @@ class Matches:
 
     # idk what this means
     def __always_use_slash(self) -> str:
-        return "1"
+        return "0"
 
     def __file_suffixes(self) -> str:
         _round = "_rounds.html"
