@@ -154,19 +154,25 @@ class Sheet:
                 power = fix_none_int(self.val(pos.power))
                 ten = fix_none_int(self.val(pos.ten))
                 neg = fix_none_int(self.val(pos.neg))
+
                 if name is None or name == "":
                     if tuh > 0 or power > 0 or ten > 0 or neg > 0:
                         self.warn(
                             "no name is getting tossups, skipped point collection"
                         )
+                    pos = move_right(pos)
                     continue
+
+                # If autofilling TUH, all zeros and blanks in TUH cells default to config tu_per_game
+                if not tuh and self.general_config.autofill_tuh:
+                    tuh = self.general_config.tu_per_game
 
                 num_players = len(player_names)
                 player_names.add(name)
                 if num_players == len(player_names):
                     self.warn("two of the same player")
                 if power + ten + neg > tuh:
-                    self.warn("power/ten/neg exceeded tuh")
+                    self.warn(f"power/ten/neg exceeded tuh: >{tuh}")
 
                 sch.find_player(name).add_game_stats(power, ten, neg, tuh)
 
@@ -269,7 +275,7 @@ class Sheet:
 
         if bonus_points % 10 != 0:
             self.warn(
-                f"{self.left_school.get_name() if left else self.right_school.get_name()} have bonuses which are not a multiple of 10"
+                f"{self.left_school.get_name() if left else self.right_school.get_name()} have bonuses which are not a multiple of 10: {bonus_points}"
             )
         return str(bonus_points)
 
