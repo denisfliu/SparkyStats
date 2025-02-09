@@ -5,9 +5,9 @@ general:
   autofill_tuh: False
 
 # copy sheet profile and rename for different sheets
-stats_sheet: default # naqt
+stats_sheet: naqt # ucsd
 
-default: # settings for sheet in the readme
+ucsd: # settings for sheet in the readme
   left_team:
     name: C1
     total_score: M31
