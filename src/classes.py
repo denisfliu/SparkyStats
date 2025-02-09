@@ -53,7 +53,7 @@ class Player:
 
 class School:
     def __init__(self, name: str, players: List[str]):
-        self.school = name
+        self.school = name.strip()
         self.index = -1
 
         self.players = [Player(player) for player in players]

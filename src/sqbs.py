@@ -97,8 +97,8 @@ class Sheet:
         return self.left_team_config if left else self.right_team_config
 
     def init_left_and_right_schools(self) -> None:
-        left_team_name = self.val(self.left_team_config.name)
-        right_team_name = self.val(self.right_team_config.name)
+        left_team_name = self.val(self.left_team_config.name).strip()
+        right_team_name = self.val(self.right_team_config.name).strip()
 
         if (
             left_team_name not in self.schools_dict.keys()
